@@ -30,24 +30,22 @@ dir.create("Plots/Dotplot")
 
 pathDotplot <- "Plots/Dotplot/"
 
-dotplot <- function (data,path) {
-  o <- ggplot(data, aes(x = contrast, y = pathway)) +
-    geom_point(aes(size = 1-padj, color = NES, fill = NES), shape = 21, stroke = 0.5) +  
-    scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +  
-    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +  
-    scale_size_continuous(range = c(3, 15)) +
-    labs(x = "Contrast", y = "Pathway", 
-         size = "P-value", 
-         color = "NES",
-         fill = "NES") +  
+dotplot <- function (data,path,contrast) {
+  o <-ggplot(data, aes(x = NES, y = reorder(pathway, NES), color = padj)) +
+    geom_point(size = 5) + # Define um tamanho fixo para os pontos
+    scale_color_gradient(low = "red", high = "blue", name = "Adjusted p-value (padj)") + # Define a escala de cor
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.position = "bottom",
-          panel.grid.major = element_line(linewidth = 1.2, color = "grey90"),  
-          panel.grid.minor = element_line(linewidth = 0.8, color = "grey90"),  
-          panel.background = element_rect(fill = "grey", color = NA))  
-  ggsave(filename = paste(path, "Dotplot.svg", sep = ""), plot = o, device = "svg", width = 15, height = 15)
-  ggsave(filename = paste(path, "Dotplot.tiff", sep = ""), plot = o, device = "tiff", width = 15, height = 15)
+    labs(
+      title = NULL,
+      x = "Normalized Enrichment Score (NES)",
+      y = "Pathways"
+    ) +
+    theme(
+      axis.text.y = element_text(size = 10),
+      axis.ticks.y = element_blank()
+    )
+  ggsave(filename = paste(path, "Dotplot-", contrast, ".svg", sep = ""), plot = o, device = "svg", width = 15, height = 15)
+  ggsave(filename = paste(path, "Dotplot-", contrast, ".tiff", sep = ""), plot = o, device = "tiff", width = 15, height = 15)
 }
 
 
@@ -65,6 +63,8 @@ DEP_pathway <- read.csv("DEP_pathway.csv",sep = ";")
 #ΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛΛ#
 #|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||#
 #######################################Files/Data######################################
+
+contrasts <- c("CTL_10vMHW2_10","CTL_25vMHW1_25","CTL_25vMHW2_25","MHW1_25vMHW2_25","MHW2_10vMHW2_25")
 
 proteins <- unique(DEP_pathway$Accession)
 genes <- unique(DEG_pathway$ID)
@@ -240,4 +240,16 @@ combined_df$pathway <- sub("^\\(KEGG\\) ", "", combined_df$pathway)
 #|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||#
 ####################################Pathway analysis###################################
 
-dotplot(combined_df,pathDotplot)
+for(i in 1:length(contrasts)){
+  if (contrasts[i] == "CTL_10vMHW2_10") {
+    dotplot(top_10_esCTL_10vMHW2_10, pathDotplot, contrasts[i])
+  } else if (contrasts[i] == "CTL_25vMHW1_25") {
+    dotplot(top_10_esCTL_25vMHW1_25, pathDotplot, contrasts[i])
+  } else if (contrasts[i] == "CTL_25vMHW2_25") {
+    dotplot(top_10_esCTL_25vMHW2_25, pathDotplot, contrasts[i])
+  } else if (contrasts[i] == "MHW1_25vMHW2_25") {
+    dotplot(top_10_esMHW1_25vMHW2_25, pathDotplot, contrasts[i])
+  } else if (contrasts[i] == "MHW2_10vMHW2_25") {
+    dotplot(top_10_esMHW2_10vMHW2_25, pathDotplot, contrasts[i])
+  }
+}
